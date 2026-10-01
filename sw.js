@@ -1,8 +1,10 @@
-const CACHE_NAME = 'myflashcards-v1';
+const CACHE_NAME = 'myflashcards-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './css/style.css',
+  './images/icon.png',
+  './images/icon.ico',
   './js/storage.js',
   './js/game.js',
   './js/manage.js',
@@ -11,6 +13,8 @@ const ASSETS_TO_CACHE = [
   './js/plugins.js',
   './js/app.js',
   './js/plugins/english-advanced.js',
+  './js/plugins/japanese.js',
+  './js/plugins/calculus.js',
   './js/plugins/pwa-notifications.js'
 ];
 

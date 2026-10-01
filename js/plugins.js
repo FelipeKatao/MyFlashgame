@@ -40,7 +40,8 @@ class PluginsManager {
       let customConfigHtml = '';
 
       if (isInstalled && plugin.id === 'pwa-notifications') {
-        const notifSettings = window.storage.data.notificationSettings || { category: 'Todas', intervalMinutes: 1 };
+        const notifSettings = window.storage.data.notificationSettings || { category: 'Todas', intervalMinutes: 1, enabled: true };
+        const isEnabled = notifSettings.enabled !== false;
         const categories = window.storage.data.categories || [];
 
         let catOptionsHtml = `<option value="Todas" ${notifSettings.category === 'Todas' ? 'selected' : ''}>Todas as Matérias</option>`;
@@ -50,9 +51,15 @@ class PluginsManager {
 
         customConfigHtml = `
           <div class="my-4 p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-left space-y-3">
-            <h4 class="text-xs font-black uppercase text-amber-900 tracking-wider flex items-center gap-1.5">
-              <i class="fa-solid fa-sliders text-orange-500"></i> Configuração de Notificação
-            </h4>
+            <div class="flex items-center justify-between gap-2">
+              <h4 class="text-xs font-black uppercase text-amber-900 tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-sliders text-orange-500"></i> Configuração de Notificação
+              </h4>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${isEnabled ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'}">
+                <i class="fa-solid ${isEnabled ? 'fa-bell text-green-600' : 'fa-bell-slash text-red-500'} mr-1"></i>
+                ${isEnabled ? 'Ativas' : 'Pausadas'}
+              </span>
+            </div>
             
             <div>
               <label for="plugin-notif-category-select" class="block text-[11px] font-bold text-slate-600 mb-1">
@@ -75,6 +82,13 @@ class PluginsManager {
                 <option value="60" ${notifSettings.intervalMinutes == 60 ? 'selected' : ''}>1 Hora</option>
                 <option value="120" ${notifSettings.intervalMinutes == 120 ? 'selected' : ''}>2 Horas</option>
               </select>
+            </div>
+
+            <div class="pt-2 border-t border-amber-200/60">
+              <button onclick="window.PluginPWANotifications.toggleNotifications()" class="w-full py-2.5 ${isEnabled ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'} font-extrabold rounded-xl text-xs shadow transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid ${isEnabled ? 'fa-pause' : 'fa-play'}"></i>
+                ${isEnabled ? 'Pausar / Parar Notificações' : 'Reativar Notificações'}
+              </button>
             </div>
           </div>
         `;
@@ -144,7 +158,8 @@ class PluginsManager {
     const intervalSelect = document.getElementById('plugin-notif-interval-select');
 
     if (catSelect && intervalSelect) {
-      window.storage.setNotificationSettings(catSelect.value, intervalSelect.value);
+      const currentSettings = window.storage.data.notificationSettings || { enabled: true };
+      window.storage.setNotificationSettings(catSelect.value, intervalSelect.value, currentSettings.enabled !== false);
       if (window.PluginPWANotifications) {
         window.PluginPWANotifications.startNotificationScheduler();
       }

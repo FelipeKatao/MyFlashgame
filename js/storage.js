@@ -17,7 +17,8 @@ const defaultData = {
   installedPlugins: [], // e.g. ['english-advanced', 'pwa-notifications']
   notificationSettings: {
     category: 'Todas',
-    intervalMinutes: 1 // default to 1 min for fast testing, can be 1, 5, 15, 30, 60, 120
+    intervalMinutes: 1, // default to 1 min for fast testing
+    enabled: true
   },
   categories: ['Geral', 'Matemática', 'Ciências', 'História', 'Inglês'],
   cards: []
@@ -155,10 +156,11 @@ class AppStorage {
   }
 
   // --- Notification Settings ---
-  setNotificationSettings(category, intervalMinutes) {
+  setNotificationSettings(category, intervalMinutes, enabled = true) {
     this.data.notificationSettings = {
       category: category || 'Todas',
-      intervalMinutes: Math.max(1, parseInt(intervalMinutes) || 1)
+      intervalMinutes: Math.max(1, parseInt(intervalMinutes) || 1),
+      enabled: enabled !== false
     };
     this.saveData();
   }
