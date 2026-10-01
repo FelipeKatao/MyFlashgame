@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Flashcards - Aprenda Brincando</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome 6 Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- jsPDF & html2canvas CDNs for PDF Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gradient-to-br from-amber-50 via-amber-100/50 to-orange-100 min-h-screen flex flex-col text-slate-800 antialiased selection:bg-orange-500 selection:text-white">
+
+  <!-- GREEN ANIMATED DAILY GOAL TOAST NOTIFICATION -->
+  <div id="daily-goal-toast" class="hidden fixed top-5 left-1/2 -translate-x-1/2 z-50 w-11/12 max-w-lg bg-emerald-600 text-white rounded-2xl shadow-2xl p-4 border-2 border-emerald-400">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white text-2xl flex-shrink-0 animate-bounce">
+        <i class="fa-solid fa-trophy text-yellow-300"></i>
+      </div>
+      <div class="flex-1">
+        <h4 class="font-extrabold text-lg text-white">Meta Diária Batida! 🎉</h4>
+        <p id="toast-message-text" class="text-sm font-semibold text-emerald-100 leading-snug">
+          Parabéns! Você conseguiu bater a meta diária.
+        </p>
+      </div>
+      <button onclick="document.getElementById('daily-goal-toast').classList.add('hidden')" class="text-emerald-200 hover:text-white text-lg p-1">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- TOP HEADER / BAR -->
+  <header class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-lg sticky top-0 z-30">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      
+      <!-- Hamburger Menu Toggle Button (VISIBLE ON ALL SCREEN SIZES) -->
+      <div class="flex items-center gap-3">
+        <button id="btn-hamburger" aria-label="Abrir Menu" class="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition-all text-white flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-amber-300">
+          <i class="fa-solid fa-bars text-xl"></i>
+        </button>
+
+        <a href="#" onclick="window.app.navigateTo('home')" class="flex items-center gap-2 group">
+          <div class="w-10 h-10 rounded-xl bg-white text-orange-600 flex items-center justify-center font-black text-xl shadow-md group-hover:rotate-6 transition-transform">
+            🎴
+          </div>
+          <div>
+            <h1 class="font-black text-xl tracking-tight leading-none text-amber-50 drop-shadow">Flash Cards</h1>
+            <span class="text-[10px] uppercase tracking-wider font-extrabold text-amber-200">Aprenda & Memorize</span>
+          </div>
+        </a>
+      </div>
+
+      <!-- User Stats Header Widget -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Daily Goal Badge -->
+        <div id="header-daily-goal-badge" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-600/60 border border-amber-400/40 text-xs font-extrabold text-amber-100">
+          0/5 Meta
+        </div>
+
+        <!-- Score Badge -->
+        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/15 backdrop-blur border border-white/20 text-xs sm:text-sm font-extrabold">
+          <i class="fa-solid fa-star text-yellow-300 animate-pulse"></i>
+          <span id="header-user-score">0</span> pts
+        </div>
+
+        <!-- Player Profile Badge -->
+        <div data-nav-target="profile" class="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 transition-colors text-xs sm:text-sm font-bold border border-white/20">
+          <i class="fa-solid fa-user-graduate text-amber-200"></i>
+          <span id="header-player-name" class="max-w-[100px] truncate">Aluno(a)</span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- SLIDING HAMBURGER MENU DRAWER (ACCESSIBLE IN FULLSCREEN AND MOBILE) -->
+  <div id="drawer-backdrop" class="drawer-backdrop fixed inset-0 z-40 hidden opacity-0"></div>
+  <aside id="menu-drawer" class="fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-white z-50 shadow-2xl transition-transform duration-300 transform -translate-x-full flex flex-col">
+    <!-- Drawer Header -->
+    <div class="p-5 bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-white text-orange-600 flex items-center justify-center text-xl font-bold">
+          🎴
+        </div>
+        <div>
+          <h2 class="font-extrabold text-lg leading-tight">My Flashcards</h2>
+          <p class="text-xs text-amber-100">Menu Principal</p>
+        </div>
+      </div>
+      <button id="btn-close-drawer" class="p-2 text-white/80 hover:text-white text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Navigation Menu Items -->
+    <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+      <button data-nav-target="game" class="menu-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-amber-950 hover:bg-amber-100 transition-all text-left">
+        <i class="fa-solid fa-gamepad text-orange-500 text-lg w-6"></i>
+        <span>Flash Cards (Game)</span>
+      </button>
+
+      <button data-nav-target="manage" class="menu-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-amber-950 hover:bg-amber-100 transition-all text-left">
+        <i class="fa-solid fa-layer-group text-amber-500 text-lg w-6"></i>
+        <span>Gerenciar meus Cards</span>
+      </button>
+
+      <button data-nav-target="profile" class="menu-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-amber-950 hover:bg-amber-100 transition-all text-left">
+        <i class="fa-solid fa-user-gear text-orange-500 text-lg w-6"></i>
+        <span>Meu perfil</span>
+      </button>
+
+      <button data-nav-target="export" class="menu-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-amber-950 hover:bg-amber-100 transition-all text-left">
+        <i class="fa-solid fa-file-pdf text-red-500 text-lg w-6"></i>
+        <span>Exportar Flash Cards</span>
+      </button>
+      
+      <hr class="border-amber-200/60 my-3">
+
+      <button data-nav-target="home" class="menu-item w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-600 hover:bg-amber-50 transition-all text-left text-sm">
+        <i class="fa-solid fa-house text-slate-400 w-6"></i>
+        <span>Tela Inicial (Sobre)</span>
+      </button>
+    </nav>
+
+    <!-- Drawer Footer -->
+    <div class="p-4 bg-amber-50 border-t border-amber-200/70 text-center">
+      <p class="text-xs text-amber-800 font-semibold">
+        Flash Cards App v1.0 <br>
+        <span class="text-slate-500 font-normal">Armazenamento Local & Cookies Ativos</span>
+      </p>
+    </div>
+  </aside>
+
+  <!-- MAIN SPA VIEWPORT -->
+  <main class="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center">
+
+    <!-- ==================== SCREEN 1: HOME / ONBOARDING ==================== -->
+    <section id="screen-home" class="page-screen hidden">
+      <div class="max-w-3xl mx-auto text-center py-6 sm:py-10">
+        <!-- Hero Tag -->
+        <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-100 text-orange-800 font-extrabold text-xs uppercase tracking-wider mb-6 border border-orange-200 shadow-sm">
+          <i class="fa-solid fa-sparkles text-amber-500"></i> Bem-vindo ao Flash Cards Game!
+        </span>
+
+        <!-- Hero Title -->
+        <h2 class="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight mb-6 leading-tight">
+          Aprenda qualquer assunto de forma <span class="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">divertida e rápida</span>
+        </h2>
+
+        <!-- Explanation Paragraph -->
+        <p class="text-slate-700 text-base sm:text-lg mb-8 leading-relaxed max-w-2xl mx-auto">
+          Este aplicativo usa o método comprovado dos <strong>Flashcards</strong>: na frente do cartão fica a pergunta e no verso a resposta. Ao responder corretamente, você ganha <strong>+5 pontos</strong>, acumula status de aprovado e conquista sua meta diária!
+        </p>
+
+        <!-- Feature Grid Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 text-left">
+          <div class="bg-white p-5 rounded-2xl border border-amber-200 shadow-sm hover:shadow-md transition-all">
+            <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl font-extrabold mb-3">
+              <i class="fa-solid fa-rotate"></i>
+            </div>
+            <h3 class="font-bold text-slate-800 text-base mb-1">Gire o Card</h3>
+            <p class="text-slate-600 text-xs">Digite sua resposta ou teste seu conhecimento virando o cartão em 3D.</p>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-orange-200 shadow-sm hover:shadow-md transition-all">
+            <div class="w-12 h-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center text-xl font-extrabold mb-3">
+              <i class="fa-solid fa-award"></i>
+            </div>
+            <h3 class="font-bold text-slate-800 text-base mb-1">+5 Pontos</h3>
+            <p class="text-slate-600 text-xs">Ganhe pontos a cada acerto, alcance metas diárias e acompanhe o status.</p>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-amber-200 shadow-sm hover:shadow-md transition-all">
+            <div class="w-12 h-12 rounded-xl bg-yellow-100 text-yellow-700 flex items-center justify-center text-xl font-extrabold mb-3">
+              <i class="fa-solid fa-file-pdf"></i>
+            </div>
+            <h3 class="font-bold text-slate-800 text-base mb-1">Exporte em PDF</h3>
+            <p class="text-slate-600 text-xs">Gere arquivos PDF prontos para imprimir e estudar em qualquer lugar.</p>
+          </div>
+        </div>
+
+        <!-- Action CTA Buttons -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <button id="btn-home-create-cards" class="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-lg rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-3">
+            <i class="fa-solid fa-circle-plus text-xl"></i> Criar Flash Cards
+          </button>
+          <button id="btn-home-sample-cards" class="w-full sm:w-auto px-6 py-4 bg-white border-2 border-amber-300 hover:bg-amber-50 text-amber-900 font-extrabold text-base rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles text-orange-500"></i> Testar com Cards Prontos
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SCREEN 2: GAME (FLASH CARDS) ==================== -->
+    <section id="screen-game" class="page-screen hidden">
+      <div class="max-w-2xl mx-auto w-full py-4">
+        
+        <!-- Game Top Bar: Subject Dropdown & Queue Priority Stats -->
+        <div class="bg-white/80 backdrop-blur rounded-2xl p-4 border border-amber-200 shadow-sm mb-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="w-full sm:w-auto flex items-center gap-2">
+            <label for="game-category-select" class="text-xs font-extrabold uppercase text-amber-900 flex items-center gap-1.5">
+              <i class="fa-solid fa-filter text-orange-500"></i> Matéria:
+            </label>
+            <select id="game-category-select" class="flex-1 sm:w-56 px-3 py-2 bg-amber-50 border border-amber-300 rounded-xl font-bold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+              <option value="Todas">Todas as Matérias</option>
+            </select>
+          </div>
+
+          <!-- Queue Priority Badges -->
+          <div id="game-queue-stats" class="flex flex-wrap items-center justify-center gap-1.5">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- RECTANGULO AMARELO - 3D FLIP CARD CONTAINER -->
+        <div id="game-card-container" class="perspective-1000 w-full h-80 sm:h-96 mb-6">
+          <div id="game-card-inner" class="card-inner cursor-pointer" onclick="if(!window.gameEngine.isFlipped) window.gameEngine.flipCard()">
+            
+            <!-- CARD FRONT (PERGUNTA - AMARELO) -->
+            <div class="card-front select-none">
+              <div class="w-full flex items-center justify-between mb-2">
+                <span id="card-category-badge" class="px-3 py-1 rounded-full text-xs font-black bg-amber-900 text-amber-100 uppercase tracking-wider shadow-sm">
+                  Matéria
+                </span>
+                <span id="card-status-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-200 text-amber-900 border border-amber-400">
+                  Pendente
+                </span>
+              </div>
+
+              <!-- Question Text -->
+              <div class="flex-1 flex items-center justify-center px-4 my-2 text-center">
+                <h3 id="card-question-text" class="text-xl sm:text-3xl font-black text-amber-950 leading-relaxed drop-shadow-sm">
+                  Pergunta do Flashcard
+                </h3>
+              </div>
+
+              <!-- Hint Footer -->
+              <div class="text-xs font-extrabold text-amber-800/80 flex items-center gap-1.5 mt-auto">
+                <i class="fa-solid fa-arrows-rotate text-orange-600"></i> Clique ou use a caixa abaixo para virar o card
+              </div>
+            </div>
+
+            <!-- CARD BACK (RESPOSTA - LARANJA / SOFT YELLOW) -->
+            <div class="card-back select-none">
+              <div class="w-full flex items-center justify-between mb-2">
+                <span class="px-3 py-1 rounded-full text-xs font-black bg-orange-950 text-orange-100 uppercase tracking-wider">
+                  Resposta Correta
+                </span>
+                <span class="text-xs font-bold text-orange-800">
+                  Verso do Card
+                </span>
+              </div>
+
+              <!-- Answer Text -->
+              <div class="flex-1 flex items-center justify-center px-4 my-2 text-center">
+                <p id="card-answer-text" class="text-xl sm:text-2xl font-extrabold text-orange-950 leading-relaxed">
+                  Resposta do Flashcard
+                </p>
+              </div>
+
+              <div class="text-xs font-semibold text-orange-800 mt-auto">
+                Selecione abaixo se você acertou ou errou!
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- INPUT TEXTBOX & CONTROL BUTTONS BELOW CARD -->
+        <div class="bg-white rounded-2xl p-5 border border-amber-200 shadow-md">
+          
+          <!-- Auto Verdict Banner (Shown on back) -->
+          <div id="card-auto-verdict" class="hidden"></div>
+
+          <!-- FRONT STATE CONTROLS (Input + Virar Card) -->
+          <form id="answer-form" class="space-y-4">
+            <div id="card-check-controls" class="space-y-3">
+              <label for="user-answer-input" class="block text-xs uppercase tracking-wider font-extrabold text-slate-500">
+                Sua Resposta (Opcional):
+              </label>
+              <div class="flex flex-col sm:flex-row gap-3">
+                <input type="text" id="user-answer-input" placeholder="Digite aqui sua resposta para conferir..." autocomplete="off" class="flex-1 px-4 py-3 bg-amber-50/60 border border-amber-300 rounded-xl font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <button type="button" id="btn-flip-card" class="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-rotate-right"></i> Virar Card
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <!-- BACK STATE CONTROLS (Acertei / Errei / Próximo) -->
+          <div id="card-feedback-controls" class="hidden flex flex-col sm:flex-row items-center justify-between gap-3">
+            <button id="btn-mark-incorrect" class="w-full sm:w-auto px-5 py-3 bg-red-100 hover:bg-red-200 text-red-800 border border-red-300 font-extrabold rounded-xl transition-all flex items-center justify-center gap-2">
+              <i class="fa-solid fa-xmark text-lg"></i> Errei
+            </button>
+            <button id="btn-mark-correct" class="w-full sm:flex-1 px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-extrabold rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+              <i class="fa-solid fa-check text-lg"></i> Acertei (+5 pts)
+            </button>
+          </div>
+
+        </div>
+
+        <!-- EMPTY CARDS STATE -->
+        <div id="game-empty-container" class="hidden text-center py-12 bg-white/80 backdrop-blur rounded-3xl border-2 border-dashed border-amber-300 p-8 shadow-sm">
+          <div class="w-20 h-20 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-3xl mx-auto mb-4">
+            <i class="fa-solid fa-circle-check text-green-500"></i>
+          </div>
+          <h3 class="text-2xl font-black text-slate-900 mb-2">Sem cards pendentes nesta matéria!</h3>
+          <p class="text-slate-600 text-sm max-w-md mx-auto mb-6">
+            Você já respondeu a todos os flashcards selecionados ou ainda não criou cards nesta categoria.
+          </p>
+          <div class="flex flex-wrap items-center justify-center gap-3">
+            <button onclick="window.app.navigateTo('manage')" class="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-extrabold rounded-xl shadow-md">
+              <i class="fa-solid fa-plus mr-2"></i> Criar Novos Cards
+            </button>
+            <button id="btn-reset-deck-statuses" class="px-6 py-3 bg-white border border-amber-300 text-amber-900 font-extrabold rounded-xl shadow-sm hover:bg-amber-50">
+              <i class="fa-solid fa-rotate-left mr-2"></i> Reiniciar Status dos Cards
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== SCREEN 3: GERENCIAR CARDS ==================== -->
+    <section id="screen-manage" class="page-screen hidden">
+      <div class="space-y-6">
+        
+        <!-- Header Controls -->
+        <div class="bg-white/80 backdrop-blur p-6 rounded-3xl border border-amber-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-black text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-layer-group text-orange-500"></i> Gerenciar Meus Flashcards
+            </h2>
+            <p class="text-slate-600 text-xs sm:text-sm">Crie, edite e organize seus cartões por matéria.</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <button id="btn-open-new-card-modal" class="flex-1 md:flex-none px-5 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm">
+              <i class="fa-solid fa-plus"></i> Novo Flashcard
+            </button>
+            <button id="btn-load-sample-cards" class="flex-1 md:flex-none px-4 py-3 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-extrabold rounded-xl transition-all flex items-center justify-center gap-2 text-sm">
+              <i class="fa-solid fa-wand-magic-sparkles text-orange-600"></i> Exemplo
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter & Search Bar -->
+        <div class="bg-white p-4 rounded-2xl border border-amber-200 shadow-sm flex flex-col sm:flex-row gap-3">
+          <div class="flex-1 relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400"></i>
+            <input type="text" id="manage-search-input" placeholder="Buscar por pergunta, resposta ou matéria..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500">
+          </div>
+          <div class="sm:w-64">
+            <select id="manage-category-filter" class="w-full px-3 py-2.5 bg-amber-50 border border-amber-300 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500">
+              <option value="Todas">Todas as Matérias</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Cards List Grid -->
+        <div id="manage-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Rendered by manage.js -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== SCREEN 4: MEU PERFIL ==================== -->
+    <section id="screen-profile" class="page-screen hidden">
+      <div class="max-w-3xl mx-auto space-y-6 py-4">
+        
+        <!-- Header -->
+        <div class="bg-white/80 backdrop-blur p-6 rounded-3xl border border-amber-200 shadow-sm flex items-center gap-4">
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-3xl font-black shadow-md">
+            🎓
+          </div>
+          <div>
+            <h2 class="text-2xl font-black text-slate-900">Meu Perfil e Configurações</h2>
+            <p class="text-slate-600 text-xs sm:text-sm">Personalize seu nome, meta diária e gerencie seus dados.</p>
+          </div>
+        </div>
+
+        <!-- Name & Daily Goal Card -->
+        <div class="bg-white p-6 rounded-3xl border border-amber-200 shadow-sm space-y-6">
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <!-- Player Name Input -->
+            <div>
+              <label for="profile-player-name-input" class="block text-xs uppercase tracking-wider font-extrabold text-slate-500 mb-2">
+                <i class="fa-solid fa-user text-orange-500 mr-1"></i> Nome do Jogador:
+              </label>
+              <input type="text" id="profile-player-name-input" placeholder="Digite seu nome..." class="w-full px-4 py-3 bg-amber-50/50 border border-amber-300 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500">
+            </div>
+
+            <!-- Daily Goal Input -->
+            <div>
+              <label for="profile-daily-goal-input" class="block text-xs uppercase tracking-wider font-extrabold text-slate-500 mb-2">
+                <i class="fa-solid fa-bullseye text-orange-500 mr-1"></i> Meta Diária de Acertos:
+              </label>
+              <input type="number" id="profile-daily-goal-input" min="1" max="100" class="w-full px-4 py-3 bg-amber-50/50 border border-amber-300 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500">
+            </div>
+          </div>
+
+          <!-- Daily Goal Progress Widget -->
+          <div class="bg-amber-50 rounded-2xl p-4 border border-amber-200 space-y-2">
+            <div class="flex items-center justify-between text-xs font-extrabold text-amber-900">
+              <span><i class="fa-solid fa-calendar-check text-orange-500 mr-1"></i> Progresso da Meta Hoje:</span>
+              <span id="profile-goal-progress-text">0 / 5 acertos hoje (0%)</span>
+            </div>
+            <div class="w-full bg-amber-200/80 h-3 rounded-full overflow-hidden">
+              <div id="profile-goal-progress-bar" class="h-3 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-500" style="width: 0%"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Statistics Summary Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="bg-white p-4 rounded-2xl border border-amber-200 text-center shadow-sm">
+            <span class="text-xs uppercase font-extrabold text-slate-400">Pontuação</span>
+            <p id="profile-stat-score" class="text-2xl sm:text-3xl font-black text-amber-600 mt-1">0</p>
+          </div>
+          <div class="bg-white p-4 rounded-2xl border border-amber-200 text-center shadow-sm">
+            <span class="text-xs uppercase font-extrabold text-slate-400">Total Cards</span>
+            <p id="profile-stat-total-cards" class="text-2xl sm:text-3xl font-black text-slate-800 mt-1">0</p>
+          </div>
+          <div class="bg-white p-4 rounded-2xl border border-green-200 text-center shadow-sm">
+            <span class="text-xs uppercase font-extrabold text-green-600">Aprovados</span>
+            <p id="profile-stat-approved" class="text-2xl sm:text-3xl font-black text-green-600 mt-1">0</p>
+          </div>
+          <div class="bg-white p-4 rounded-2xl border border-red-200 text-center shadow-sm">
+            <span class="text-xs uppercase font-extrabold text-red-500">Reprovados</span>
+            <p id="profile-stat-reproved" class="text-2xl sm:text-3xl font-black text-red-600 mt-1">0</p>
+          </div>
+        </div>
+
+        <!-- Danger Zone & Resets -->
+        <div class="bg-white p-6 rounded-3xl border border-red-200 shadow-sm space-y-4">
+          <h3 class="font-extrabold text-red-800 text-sm uppercase tracking-wider flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation"></i> Gerenciar Dados & Limpeza
+          </h3>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button id="btn-reset-all-cards" class="px-4 py-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-extrabold rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2">
+              <i class="fa-solid fa-trash-can"></i> Apagar Flashcards
+            </button>
+            <button id="btn-reset-score" class="px-4 py-3 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-extrabold rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2">
+              <i class="fa-solid fa-trophy"></i> Apagar Pontuação
+            </button>
+            <button id="btn-reset-statuses" class="px-4 py-3 bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 font-extrabold rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2">
+              <i class="fa-solid fa-rotate-left"></i> Apagar Status dos Cards
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== SCREEN 5: EXPORTAR FLASH CARDS ==================== -->
+    <section id="screen-export" class="page-screen hidden">
+      <div class="space-y-6 py-4">
+        
+        <!-- Header & Export Options Bar -->
+        <div class="bg-white/80 backdrop-blur p-6 rounded-3xl border border-amber-200 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-black text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-file-pdf text-red-500"></i> Exportar Flash Cards
+            </h2>
+            <p class="text-slate-600 text-xs sm:text-sm">Gere um arquivo em formato PDF com os cartões formatados em retângulos para imprimir ou conferir.</p>
+          </div>
+
+          <!-- Controls -->
+          <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+            
+            <!-- Select Tipo -->
+            <div class="w-full sm:w-auto">
+              <label for="export-type-select" class="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">Tipo:</label>
+              <select id="export-type-select" class="w-full px-3 py-2 bg-amber-50 border border-amber-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                <option value="both">Perguntas e Respostas</option>
+                <option value="questions">Apenas Perguntas</option>
+                <option value="answers">Apenas Respostas</option>
+              </select>
+            </div>
+
+            <!-- Select Materia -->
+            <div class="w-full sm:w-auto">
+              <label for="export-category-select" class="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">Matéria:</label>
+              <select id="export-category-select" class="w-full px-3 py-2 bg-amber-50 border border-amber-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                <option value="Todas">Todas as Matérias</option>
+              </select>
+            </div>
+
+            <!-- Export Buttons -->
+            <div class="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-[18px]">
+              <button id="btn-generate-pdf" class="flex-1 sm:flex-none px-5 py-2.5 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-download"></i> Baixar PDF
+              </button>
+              <button id="btn-print-cards" class="px-4 py-2.5 bg-white border border-amber-300 text-amber-900 font-extrabold text-xs rounded-xl hover:bg-amber-50 transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-print"></i> Imprimir
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Printable Document Live Preview Box -->
+        <div class="bg-white p-6 rounded-3xl border border-amber-200 shadow-sm">
+          <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+            <h3 class="font-extrabold text-slate-800 text-sm uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-eye text-orange-500"></i> Pré-visualização das Folhas de Cards
+            </h3>
+            <span class="text-xs text-slate-400 font-semibold">Cada quadrado representa um Flashcard</span>
+          </div>
+
+          <!-- Cards Grid for Export -->
+          <div id="export-preview-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <!-- Rendered by export.js -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL CREATE / EDIT FLASHCARD -->
+  <div id="card-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-amber-200 transform transition-all">
+      
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+        <h3 id="modal-title" class="text-xl font-black text-slate-900">Novo Flashcard</h3>
+        <button id="btn-close-card-modal" class="text-slate-400 hover:text-slate-600 text-lg p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="card-modal-form" class="space-y-4">
+        <!-- Question -->
+        <div>
+          <label for="modal-card-question" class="block text-xs uppercase tracking-wider font-extrabold text-slate-500 mb-1">
+            Pergunta (Frente do Card):
+          </label>
+          <textarea id="modal-card-question" rows="3" required placeholder="Ex: Qual é a fórmula da água?" class="w-full px-4 py-3 bg-amber-50/40 border border-amber-300 rounded-xl font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"></textarea>
+        </div>
+
+        <!-- Answer -->
+        <div>
+          <label for="modal-card-answer" class="block text-xs uppercase tracking-wider font-extrabold text-slate-500 mb-1">
+            Resposta (Verso do Card):
+          </label>
+          <textarea id="modal-card-answer" rows="3" required placeholder="Ex: H2O" class="w-full px-4 py-3 bg-amber-50/40 border border-amber-300 rounded-xl font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"></textarea>
+        </div>
+
+        <!-- Category -->
+        <div>
+          <label for="modal-card-category-select" class="block text-xs uppercase tracking-wider font-extrabold text-slate-500 mb-1">
+            Matéria / Categoria:
+          </label>
+          <select id="modal-card-category-select" class="w-full px-4 py-3 bg-amber-50/40 border border-amber-300 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500">
+            <!-- Populate dynamically -->
+          </select>
+        </div>
+
+        <!-- New Category Input (Shown if __NEW__ selected) -->
+        <div id="modal-new-category-container" class="hidden">
+          <label for="modal-card-new-category" class="block text-xs uppercase tracking-wider font-extrabold text-orange-600 mb-1">
+            Nome da Nova Matéria:
+          </label>
+          <input type="text" id="modal-card-new-category" placeholder="Ex: Geografia, Física..." class="w-full px-4 py-3 bg-orange-50 border border-orange-300 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500">
+        </div>
+
+        <!-- Buttons -->
+        <div class="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
+          <button type="button" onclick="window.manageCards.closeCardModal()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-xl text-sm transition-colors">
+            Cancelar
+          </button>
+          <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold rounded-xl shadow-md text-sm transition-all">
+            Salvar Flashcard
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="js/storage.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/manage.js"></script>
+  <script src="js/profile.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
