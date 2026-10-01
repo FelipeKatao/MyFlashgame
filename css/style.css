@@ -35,8 +35,11 @@ body {
 }
 
 .card-inner.is-flipped {
+  
   transform: rotateY(180deg);
 }
+
+
 
 .card-front, .card-back {
   position: absolute;
@@ -51,8 +54,12 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.75rem;
   box-shadow: var(--shadow-card);
+  transition: background 0.35s ease, border-color 0.35s ease, color 0.35s ease, opacity 0.35s ease, box-shadow 0.35s ease;
+}
+
+.card-front *, .card-back * {
+  transition: opacity 0.25s ease;
 }
 
 .card-front {
@@ -66,6 +73,22 @@ body {
   border: 3px solid #ea580c;
   color: #7c2d12;
   transform: rotateY(180deg);
+}
+.color_font{
+  color: #f59e0b;
+}
+/* Card Transition Darkening (Escurecer card ao avançar para ocultar resposta) */
+.card-darkened .card-front,
+.card-darkened .card-back {
+  background: #0f172a !important; /* Cor toda escura */
+  border-color: #334155 !important;
+  color: #f59e0b !important;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.7) !important;
+}
+
+.card-darkened .card-front *,
+.card-darkened .card-back * {
+  opacity: 0 !important;
 }
 
 /* Screen Navigation Transitions */
@@ -143,6 +166,122 @@ body {
   100% {
     opacity: 1;
     transform: translate(-50%, 0) scale(1);
+  }
+}
+
+/* ==================== SVG MASCOT ANIMATIONS ==================== */
+
+/* SVG Body Float */
+.mascot-container {
+  animation: mascotFloat 3s ease-in-out infinite alternate;
+}
+
+@keyframes mascotFloat {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-5px);
+  }
+}
+
+.mascot-svg-animated {
+  width: 58px;
+  height: 58px;
+  overflow: visible;
+}
+
+/* Nadadeira (Fins) Animation */
+g[inkscape\:label="Nadadeira"], #g8, #g8-2 {
+  animation: finWave 1.6s ease-in-out infinite alternate;
+  transform-origin: 50% 50%;
+}
+
+@keyframes finWave {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(-10deg) scale(1.03);
+  }
+  100% {
+    transform: rotate(8deg) scale(0.98);
+  }
+}
+
+/* Olhos (Eyes) Blinking Animation */
+path[inkscape\:label="Olhos"], #path4, #path4-1 {
+  animation: eyeBlink 3.8s ease-in-out infinite;
+  transform-origin: 50% 50%;
+}
+
+@keyframes eyeBlink {
+  0%, 90%, 100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.15);
+  }
+}
+
+/* Barriga (Belly) Breathing Animation */
+ellipse[inkscape\:label="barriga"], #path1 {
+  animation: bellyBreathe 2.4s ease-in-out infinite alternate;
+  transform-origin: 50% 50%;
+}
+
+@keyframes bellyBreathe {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.035);
+  }
+}
+
+/* Speech Bubble Styling */
+.speech-bubble {
+  position: relative;
+  background: #ffffff;
+  border: 2px solid #f59e0b;
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 15px -3px rgba(245, 158, 11, 0.2);
+}
+
+.speech-bubble::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px 10px 6px 0;
+  border-style: solid;
+  border-color: transparent #f59e0b transparent transparent;
+}
+
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 5px 8px 5px 0;
+  border-style: solid;
+  border-color: transparent #ffffff transparent transparent;
+}
+
+.mascot-pop-anim {
+  animation: mascotPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes mascotPop {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
   }
 }
 

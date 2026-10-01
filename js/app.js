@@ -13,6 +13,10 @@ class App {
     this.setupEventListeners();
     this.updateHeaderStats();
 
+    if (window.mascotManager) {
+      window.mascotManager.init();
+    }
+
     // Check URL parameters for targeted notification card
     const urlParams = new URLSearchParams(window.location.search);
     const targetCardId = urlParams.get('cardId');
@@ -139,7 +143,7 @@ class App {
       this.currentScreen = screenId;
       this.isTransitioning = false;
 
-      // Trigger screen-specific initializers
+      // Trigger screen-specific initializers & mascot speech
       this.onScreenActive(screenId);
     };
 
@@ -154,6 +158,10 @@ class App {
   }
 
   onScreenActive(screenId) {
+    if (window.mascotManager) {
+      window.mascotManager.onScreenChange(screenId);
+    }
+
     if (screenId === 'game') {
       if (window.gameEngine && !window.gameEngine.currentCard) window.gameEngine.init();
     } else if (screenId === 'manage') {
@@ -195,6 +203,10 @@ class App {
 
     toast.classList.remove('hidden');
     toast.classList.add('toast-animated');
+
+    if (window.mascotManager) {
+      window.mascotManager.onDailyGoalReached(playerName);
+    }
 
     if (window.confetti) {
       window.confetti({

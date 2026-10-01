@@ -217,7 +217,13 @@ class GameEngine {
     // Render Answer Controls depending on Response Mode ('multiple_choice' vs 'type')
     this.renderResponseModeControls();
 
-    // Hide feedback controls until submitted
+    // Hide verdict and feedback controls until submitted
+    const autoVerdictEl = document.getElementById('card-auto-verdict');
+    if (autoVerdictEl) {
+      autoVerdictEl.classList.add('hidden');
+      autoVerdictEl.innerHTML = '';
+    }
+
     const feedbackControls = document.getElementById('card-feedback-controls');
     if (feedbackControls) feedbackControls.classList.add('hidden');
   }
@@ -277,32 +283,92 @@ class GameEngine {
     if (!this.currentCard) return [];
 
     const correctAnswer = this.currentCard.answer;
-    const category = this.currentCategory;
+    // ALWAYS use the card's specific category so options never mix across subjects
+    const cardCategory = this.currentCard.category || 'Geral';
 
-    // Get other cards from same category
-    let otherCards = window.storage.data.cards.filter(c => c.id !== this.currentCard.id);
-    let categoryOthers = otherCards.filter(c => c.category === category && c.answer !== correctAnswer);
+    // Filter cards strictly belonging to the SAME category as currentCard
+    const sameCategoryCards = window.storage.data.cards.filter(c => 
+      c.id !== this.currentCard.id &&
+      c.category === cardCategory &&
+      c.answer.trim().toLowerCase() !== correctAnswer.trim().toLowerCase()
+    );
 
-    // If not enough cards in category, pick from all cards
-    if (categoryOthers.length < 2) {
-      categoryOthers = otherCards.filter(c => c.answer !== correctAnswer);
+    // Shuffle same category options
+    sameCategoryCards.sort(() => 0.5 - Math.random());
+
+    // Extract unique answers strictly from the same category
+    const incorrectAnswers = [];
+    const usedAnswers = new Set([correctAnswer.trim().toLowerCase()]);
+
+    for (const card of sameCategoryCards) {
+      const ansTrim = card.answer.trim();
+      const ansLower = ansTrim.toLowerCase();
+      if (!usedAnswers.has(ansLower)) {
+        usedAnswers.add(ansLower);
+        incorrectAnswers.push(ansTrim);
+      }
+      if (incorrectAnswers.length >= 2) break;
     }
 
-    // Shuffle and pick 2 incorrect answers
-    categoryOthers.sort(() => 0.5 - Math.random());
-    const incorrectAnswers = categoryOthers.slice(0, 2).map(c => c.answer);
-
-    // Fallbacks if system has fewer than 3 total cards
-    while (incorrectAnswers.length < 2) {
-      const dummyFallbacks = ['Opção Alternativa B', 'Nenhuma das anteriores', 'Resposta Indefinida', 'Conceito Genérico'];
-      const dummy = dummyFallbacks.find(d => d !== correctAnswer && !incorrectAnswers.includes(d)) || `Opção ${incorrectAnswers.length + 1}`;
-      incorrectAnswers.push(dummy);
+    // If category has fewer than 3 total cards, supplement with category-relevant distractors ONLY
+    if (incorrectAnswers.length < 2) {
+      const categoryFallbacks = this.getCategoryFallbacks(cardCategory, correctAnswer, usedAnswers);
+      for (const fallback of categoryFallbacks) {
+        if (incorrectAnswers.length >= 2) break;
+        const fallbackLower = fallback.trim().toLowerCase();
+        if (!usedAnswers.has(fallbackLower)) {
+          usedAnswers.add(fallbackLower);
+          incorrectAnswers.push(fallback);
+        }
+      }
     }
 
-    // Combine correct + 2 incorrect and shuffle
+    // Combine correct answer + 2 same-category incorrect answers and shuffle
     const choices = [correctAnswer, ...incorrectAnswers];
     choices.sort(() => 0.5 - Math.random());
     return choices;
+  }
+
+  getCategoryFallbacks(category, correctAnswer, usedAnswers) {
+    const catLower = (category || '').toLowerCase();
+    
+    let pool = [];
+    if (catLower.includes('inglês') || catLower.includes('ingles') || catLower.includes('english')) {
+      pool = [
+        'the quality of being honest (Honestidade)',
+        'an act of choosing or deciding (Escolha)',
+        'expressing deep appreciation (Agradecimento)',
+        'a state of peaceful agreement (Harmonia)',
+        'the capacity to recover quickly (Resiliência)',
+        'having a strong desire to learn (Curiosidade)'
+      ];
+    } else if (catLower.includes('japonês') || catLower.includes('japones') || catLower.includes('japanese')) {
+      pool = [
+        '(Saudação / Cumprimento)',
+        '(Agradecimento / Gratidão)',
+        '(Desculpa / Licença)',
+        '(Família / Parentes)',
+        '(Estudo / Aprendizado)',
+        '(Viagem / Passeio)'
+      ];
+    } else if (catLower.includes('cálculo') || catLower.includes('calculo') || catLower.includes('math') || catLower.includes('matemática')) {
+      pool = [
+        'f\'(x) = 0',
+        'x^3 / 3 + C',
+        'Limite Inexistente',
+        'dy/dx = k',
+        'cos(x) + C',
+        'ln|x| + C'
+      ];
+    } else {
+      pool = [
+        `Conceito Alternativo (${category})`,
+        `Definição Secundária de ${category}`,
+        `Termo Relacionado a ${category}`
+      ];
+    }
+
+    return pool;
   }
 
   selectChoice(idx) {
@@ -334,12 +400,66 @@ class GameEngine {
     const input = document.getElementById('user-answer-input');
     const userText = input ? input.value : '';
 
-    // Clean whitespace and lowercase as required
-    const cleanedUser = userText.trim().toLowerCase();
-    const cleanedActual = this.currentCard.answer.trim().toLowerCase();
-
-    const isCorrect = (cleanedUser === cleanedActual);
+    const isCorrect = this.checkAnswerMatch(userText, this.currentCard ? this.currentCard.answer : '');
     this.processAutomaticValidation(isCorrect, userText);
+  }
+
+  /**
+   * Flexible answer matching:
+   * - Ignores case and extra whitespace
+   * - Matches full answer string
+   * - Extracts text inside parentheses (...)
+   * - Splits multiple terms by '/', ',', ';', '='
+   * Returns true if user input matches any extracted term option.
+   */
+  checkAnswerMatch(typedUser, cardAnswer) {
+    if (!typedUser || !cardAnswer) return false;
+
+    const normalize = (str) => {
+      return (str || '')
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, ' ');
+    };
+
+    const cleanedUser = normalize(typedUser);
+    const cleanedAnswer = normalize(cardAnswer);
+
+    if (!cleanedUser) return false;
+    if (cleanedUser === cleanedAnswer) return true;
+
+    const candidates = new Set();
+    candidates.add(cleanedAnswer);
+
+    // Extract all parens content e.g. (Alcançar / Atingir) or (Comida)
+    const parensMatches = cardAnswer.match(/\(([^)]+)\)/g);
+    if (parensMatches) {
+      parensMatches.forEach(m => {
+        const inner = m.replace(/[()]/g, '');
+        candidates.add(normalize(inner));
+      });
+    }
+
+    // Add string with parens stripped out
+    const withoutParens = cardAnswer.replace(/\([^)]*\)/g, ' ');
+    candidates.add(normalize(withoutParens));
+
+    // Split candidate strings by separators: /, ,, ;, =
+    const finalCandidates = new Set();
+    candidates.forEach(cand => {
+      if (!cand) return;
+      finalCandidates.add(cand);
+
+      const parts = cand.split(/[\/,;=]/);
+      parts.forEach(p => {
+        const cleanP = normalize(p);
+        if (cleanP) {
+          finalCandidates.add(cleanP);
+        }
+      });
+    });
+
+    return finalCandidates.has(cleanedUser);
   }
 
   processAutomaticValidation(isCorrect, providedAnswer) {
@@ -347,6 +467,7 @@ class GameEngine {
     const cardInner = document.getElementById('game-card-inner');
     this.isFlipped = true;
     if (cardInner) {
+      
       cardInner.classList.add('is-flipped');
     }
 
@@ -368,13 +489,17 @@ class GameEngine {
       }
     }
 
-    // 3. Register outcome automatically
+    // 3. Register outcome automatically & Trigger Mascot Speech
     if (isCorrect) {
       window.storage.updateCardStatus(this.currentCard.id, 'Aprovado');
       this.currentCard.status = 'Aprovado';
       const result = window.storage.registerCorrectAnswer();
 
       this.spawnFloatingScore('+5');
+
+      if (window.mascotManager) {
+        window.mascotManager.onCorrectAnswer();
+      }
 
       if (result.isGoalReached && window.app) {
         window.app.triggerDailyGoalToast();
@@ -386,6 +511,10 @@ class GameEngine {
     } else {
       window.storage.updateCardStatus(this.currentCard.id, 'Reprovado');
       this.currentCard.status = 'Reprovado';
+
+      if (window.mascotManager) {
+        window.mascotManager.onIncorrectAnswer(this.currentCard.answer);
+      }
     }
 
     // Show next card button
@@ -394,6 +523,33 @@ class GameEngine {
   }
 
   nextCard() {
+    const cardContainer = document.getElementById('game-card-container');
+    const autoVerdictEl = document.getElementById('card-auto-verdict');
+    const feedbackControls = document.getElementById('card-feedback-controls');
+
+    // 1. Immediately hide previous answer feedback ("se acertou ou errou") and next card button
+    if (autoVerdictEl) {
+      autoVerdictEl.classList.add('hidden');
+      autoVerdictEl.innerHTML = '';
+    }
+    if (feedbackControls) {
+      feedbackControls.classList.add('hidden');
+    }
+
+    // 2. Immediately darken card to obscure next card's answer during flip
+    if (cardContainer) {
+      cardContainer.classList.add('card-darkened');
+    }
+
+    // 3. Unflip card 3D back to 0deg (front question)
+    const cardInner = document.getElementById('game-card-inner');
+    if (cardInner) {
+      
+      cardInner.classList.remove('is-flipped');
+    }
+    this.isFlipped = false;
+
+    // 4. Advance queue and render next card data
     this.currentCardIndex++;
     if (this.currentCardIndex < this.cardQueue.length) {
       this.currentCard = this.cardQueue[this.currentCardIndex];
@@ -401,6 +557,13 @@ class GameEngine {
     } else {
       this.loadCardQueue();
     }
+
+    // 5. As the card flips back to reveal the next question (halfway through rotation ~300ms), remove darkening to restore normal colors
+    setTimeout(() => {
+      if (cardContainer) {
+        cardContainer.classList.remove('card-darkened');
+      }
+    }, 300);
   }
 
   spawnFloatingScore(text) {

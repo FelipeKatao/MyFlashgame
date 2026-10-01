@@ -5,10 +5,21 @@
 
 class PluginsManager {
   constructor() {
-    this.plugins = [
-      window.PluginEnglishAdvanced,
-      window.PluginPWANotifications
+    this.pluginList = [
+      'PluginEnglishAdvanced',
+      'PluginJapanese',
+      'PluginCalculus',
+      'PluginPWANotifications'
     ];
+  }
+
+  get plugins() {
+    return [
+      window.PluginEnglishAdvanced,
+      window.PluginJapanese,
+      window.PluginCalculus,
+      window.PluginPWANotifications
+    ].filter(Boolean);
   }
 
   init() {

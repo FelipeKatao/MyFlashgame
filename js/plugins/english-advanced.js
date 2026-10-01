@@ -1,12 +1,12 @@
 /**
  * Plugin: Inglês Avançado
- * Adiciona 80 Flashcards de Vocabulário de Inglês com pronúncia fonética e aplicação em frases.
+ * Adiciona 120 Flashcards de Vocabulário de Inglês com pronúncia fonética e aplicação em frases.
  */
 
 window.PluginEnglishAdvanced = {
   id: 'english-advanced',
   name: 'Inglês Avançado',
-  description: 'Adiciona 80 Flashcards com palavras em Inglês, como se lê (pronúncia fonética) e exemplo de aplicação.',
+  description: 'Adiciona 120 Flashcards com palavras em Inglês, como se lê (pronúncia fonética) e exemplo de aplicação.',
   icon: 'fa-language',
   categoryName: 'Inglês Avançado',
 
@@ -90,7 +90,47 @@ window.PluginEnglishAdvanced = {
     { question: 'Insight', phonetic: '/ ˈinˌsīt /', example: 'The book gave deep insight into history.', answer: 'accurate and deep intuitive understanding (Visão interna / Percepção)' },
     { question: 'Prosperity', phonetic: '/ präˈsperədē /', example: 'Peace brings economic prosperity.', answer: 'the state of flourishing or thriving (Prosperidade)' },
     { question: 'Perseverance', phonetic: '/ ˌpərsəˈvirəns /', example: 'Perseverance leads to success despite obstacles.', answer: 'continued effort despite difficulties (Perseverança)' },
-    { question: 'Dedication', phonetic: '/ ˌdedəˈkāSHən /', example: 'His dedication to learning is inspiring.', answer: 'the quality of being committed to a task (Dedicação)' }
+    { question: 'Dedication', phonetic: '/ ˌdedəˈkāSHən /', example: 'His dedication to learning is inspiring.', answer: 'the quality of being committed to a task (Dedicação)' },
+    { question: 'Quintessential', phonetic: '/ ˌkwin-tə-ˈsen-shəl /', example: 'She is the quintessential modern entrepreneur.', answer: 'representing the most perfect or typical example of a quality (Quintessencial / Típico)' },
+    { question: 'Obfuscate', phonetic: '/ ˈäb-fə-ˌskāt /', example: 'Do not try to obfuscate the truth with complicated words.', answer: 'make obscure, unclear, or unintelligible (Ofuscar / Confundir)' },
+    { question: 'Ubiquitous', phonetic: '/ yü-ˈbi-kwə-təs /', example: 'Smartphones have become ubiquitous in daily life.', answer: 'present, appearing, or found everywhere (Onipresente / Ubíquo)' },
+    { question: 'Ephemeral', phonetic: '/ i-ˈfe-mə-rəl /', example: 'Fame can be ephemeral, but impact lasts.', answer: 'lasting for a very short time (Efêmero / Passageiro)' },
+    { question: 'Serendipity', phonetic: '/ ˌser-ən-ˈdi-pə-tē /', example: 'Meeting my best friend was pure serendipity.', answer: 'the occurrence of events by chance in a happy way (Acaso Feliz / Serendipidade)' },
+    { question: 'Surreptitious', phonetic: '/ ˌsər-əp-ˈti-shəs /', example: 'They made a surreptitious entrance through the back door.', answer: 'kept secret, especially because it would not be approved of (Surrateiro / Clandestino)' },
+    { question: 'Equanimity', phonetic: '/ ˌē-kwə-ˈni-mə-tē /', example: 'She handled the crisis with remarkable equanimity.', answer: 'mental calmness, composure, and evenness of temper (Equanimidade / Calma)' },
+    { question: 'Pragmatic', phonetic: '/ praɡ-ˈma-tik /', example: 'We need a pragmatic approach to solve this issue.', answer: 'dealing with things sensibly and realistically (Pragmático / Prático)' },
+    { question: 'Superfluous', phonetic: '/ su̇-ˈpər-flü-əs /', example: 'Clear writing avoids superfluous words.', answer: 'unnecessary, especially through being more than enough (Superficial / Supérfluo)' },
+    { question: 'Taciturn', phonetic: '/ ˈta-sə-ˌtərn /', example: 'The old man was taciturn and rarely spoke.', answer: 'reserved or uncommunicative in speech (Taciturno / Calado)' },
+    { question: 'Fastidious', phonetic: '/ fa-ˈsti-dē-əs /', example: 'He was fastidious about keeping his desk organized.', answer: 'very attentive to and concerned about accuracy and detail (Exigente / Detalhista)' },
+    { question: 'Pernicious', phonetic: '/ pər-ˈni-shəs /', example: 'Fake news has a pernicious effect on society.', answer: 'having a harmful effect, especially in a gradual way (Pernicioso / Nocivo)' },
+    { question: 'Magnanimous', phonetic: '/ maɡ-ˈna-nə-məs /', example: 'He was magnanimous in victory and thanked his opponent.', answer: 'generous or forgiving, especially toward a rival (Magnânimo / Generoso)' },
+    { question: 'Sycophant', phonetic: '/ ˈsi-kə-fənt /', example: 'The CEO was surrounded by sycophants who praised every idea.', answer: 'a person who acts obsequiously toward someone to gain advantage (Adulador / Puxa-saco)' },
+    { question: 'Eloquent', phonetic: '/ ˈe-lə-kwənt /', example: 'Her eloquent speech inspired everyone in the audience.', answer: 'fluent or persuasive in speaking or writing (Eloquente / Persuasivo)' },
+    { question: 'Esoteric', phonetic: '/ ˌe-sə-ˈter-ik /', example: 'Quantum physics remains an esoteric subject for many.', answer: 'intended for or likely to be understood by only a small number (Esotérico / Complexo)' },
+    { question: 'Scrupulous', phonetic: '/ ˈskrü-pyə-ləs /', example: 'She is scrupulous about following safety protocols.', answer: 'diligent, thorough, and extremely attentive to details (Escrupuloso / Cuidadoso)' },
+    { question: 'Benevolent', phonetic: '/ bə-ˈne-və-lənt /', example: 'The company was founded by a benevolent philanthropist.', answer: 'well meaning and kindly (Benevolente / Bondoso)' },
+    { question: 'Volatile', phonetic: '/ ˈvä-lə-təl /', example: 'Stock markets can be highly volatile during uncertain times.', answer: 'liable to change rapidly and unpredictably (Volátil / Inconstante)' },
+    { question: 'Ineffable', phonetic: '/ in-ˈe-fə-bəl /', example: 'The beauty of the sunset filled her with ineffable joy.', answer: 'too great or extreme to be expressed in words (Inefável / Indescritível)' },
+    { question: 'Mellifluous', phonetic: '/ me-ˈli-flü-əs /', example: 'The singer has a sweet and mellifluous voice.', answer: 'sweet or musical; pleasant to hear (Melífluo / Suave)' },
+    { question: 'Nefarious', phonetic: '/ ni-ˈfer-ē-əs /', example: 'The villain hatched a nefarious scheme to take over the city.', answer: 'wicked or criminal in nature (Nefando / Nefrário / Malvado)' },
+    { question: 'Petrichor', phonetic: '/ ˈpe-trə-ˌkôr /', example: 'She loved the soothing petrichor after summer rain.', answer: 'a pleasant smell that frequently accompanies the first rain (Cheiro de Chuva / Petricor)' },
+    { question: 'Solitude', phonetic: '/ ˈsä-lə-ˌtüd /', example: 'He enjoyed the solitude of the mountain cabin.', answer: 'the state or situation of being alone (Solidão / Retiro)' },
+    { question: 'Disparate', phonetic: '/ ˈdis-p(ə-)rət /', example: 'The report brought together disparate pieces of evidence.', answer: 'essentially different in kind; not allowing comparison (Dispar / Diferente)' },
+    { question: 'Ostentatious', phonetic: '/ ˌäs-tən-ˈtā-shəs /', example: 'He avoided ostentatious displays of wealth.', answer: 'characterized by vulgar or pretentious display (Ostentoso / Pretensioso)' },
+    { question: 'Voracious', phonetic: '/ və-ˈrā-shəs /', example: 'She is a voracious reader who finishes three books a week.', answer: 'having a huge appetite or enthusiasm for an activity (Voraz / Insaciável)' },
+    { question: 'Enigmatic', phonetic: '/ ˌe-niɡ-ˈma-tik /', example: 'Mona Lisa\'s enigmatic smile intrigues art lovers.', answer: 'difficult to interpret or understand; mysterious (Enigmático / Misterioso)' },
+    { question: 'Alacrity', phonetic: '/ ə-ˈla-krə-tē /', example: 'She accepted the job offer with eagerness and alacrity.', answer: 'brisk and cheerful readiness (Prontidão / Animação)' },
+    { question: 'Caustic', phonetic: '/ ˈkȯ-stik /', example: 'His caustic humor offended some people.', answer: 'sarcastic in a scathing and bitter way (Cáustico / Sarcástico)' },
+    { question: 'Clandestine', phonetic: '/ klan-ˈdes-tən /', example: 'They held clandestine meetings in secret locations.', answer: 'kept secret or done secretively (Clandestino / Secreto)' },
+    { question: 'Deferential', phonetic: '/ ˌde-fə-ˈren-shəl /', example: 'He showed deferential respect to his mentors.', answer: 'showing deference; respectful (Respeitoso / Deferente)' },
+    { question: 'Idiosyncratic', phonetic: '/ ˌi-dē-ō-siŋ-ˈkra-tik /', example: 'His idiosyncratic style made his art unique.', answer: 'peculiar or individual characteristic (Idiosincrásico / Peculiar)' },
+    { question: 'Juxtaposition', phonetic: '/ ˌjək-stə-pə-ˈzi-shən /', example: 'The museum showed a striking juxtaposition of old and new.', answer: 'the fact of two things being seen or placed close together (Juxtaposição / Lado a lado)' },
+    { question: 'Luminous', phonetic: '/ ˈlü-mə-nəs /', example: 'The night sky was illuminated by luminous stars.', answer: 'full of or shedding light; bright or shining (Luminoso / Brilhante)' },
+    { question: 'Mitigate', phonetic: '/ ˈmi-tə-ˌgāt /', example: 'Steps were taken to mitigate the risks.', answer: 'make less severe, serious, or painful (Mitigar / Atenuar)' },
+    { question: 'Nonchalant', phonetic: '/ ˌnän-shə-ˈlänt /', example: 'He appeared nonchalant despite the tense situation.', answer: 'feeling or appearing casually calm and relaxed (Despreocupado / Indiferente)' },
+    { question: 'Recalcitrant', phonetic: '/ ri-ˈkal-sə-trənt /', example: 'The recalcitrant student refused to follow the rules.', answer: 'having an obstinately uncooperative attitude (Recalcitrante / Desobediente)' },
+    { question: 'Cognizant', phonetic: '/ ˈkäg-nə-zənt /', example: 'Leaders must remain cognizant of market trends.', answer: 'having knowledge or being aware of (Ciente / Consciente)' },
+    { question: 'Magnificence', phonetic: '/ mag-ˈni-fə-səns /', example: 'They marveled at the sheer magnificence of the waterfall.', answer: 'the quality of being magnificent; grandeur (Magnificência / Esplendor)' }
   ],
 
   install() {
