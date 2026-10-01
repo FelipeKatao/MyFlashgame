@@ -35,7 +35,7 @@ body {
 }
 
 .card-inner.is-flipped {
-  
+
   transform: rotateY(180deg);
 }
 
@@ -82,13 +82,20 @@ body {
 .card-darkened .card-back {
   background: #0f172a !important; /* Cor toda escura */
   border-color: #334155 !important;
-  color: #f59e0b !important;
   box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.7) !important;
 }
 
-.card-darkened .card-front *,
-.card-darkened .card-back * {
-  opacity: 0 !important;
+/* Font/Text Opacity control (Opacidade 0 antes de virar, 100% após virar) */
+.text-opacity-0,
+.text-opacity-0 * {
+  opacity: 0.4 !important;
+  transition: opacity 0.3s ease !important;
+}
+
+.card-inner *,
+.card-front *,
+.card-back * {
+  transition: opacity 0.35s ease;
 }
 
 /* Screen Navigation Transitions */

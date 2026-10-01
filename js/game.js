@@ -10,6 +10,7 @@ class GameEngine {
     this.currentCard = null;
     this.cardQueue = [];
     this.isFlipped = false;
+    this.isFlipping = false;
     this.selectedMultipleChoice = null;
     this.generatedChoices = [];
   }
@@ -463,71 +464,95 @@ class GameEngine {
   }
 
   processAutomaticValidation(isCorrect, providedAnswer) {
-    // 1. Flip Card 3D
+    if (this.isFlipping) return;
+    this.isFlipping = true;
+
     const cardInner = document.getElementById('game-card-inner');
-    this.isFlipped = true;
+
+    // 1. Set font/text opacity to 0 immediately before turning
     if (cardInner) {
-      
-      cardInner.classList.add('is-flipped');
+      cardInner.classList.add('text-opacity-0');
     }
 
-    // 2. Render Automatic Verdict Banner on back side
-    const autoVerdictEl = document.getElementById('card-auto-verdict');
-    if (autoVerdictEl) {
-      autoVerdictEl.classList.remove('hidden');
+    // 2. Wait 1 second (1000ms) with font opacity = 0
+    setTimeout(() => {
+      // Activate 3D flip animation
+      this.isFlipped = true;
+      if (cardInner) {
+        cardInner.classList.add('is-flipped');
+      }
+
+      // Render Automatic Verdict Banner on back side
+      const autoVerdictEl = document.getElementById('card-auto-verdict');
+      if (autoVerdictEl) {
+        autoVerdictEl.classList.remove('hidden');
+        if (isCorrect) {
+          autoVerdictEl.className = 'p-3 bg-green-100 text-green-900 border-2 border-green-400 rounded-2xl font-black text-sm text-center mb-3 shadow-sm';
+          autoVerdictEl.innerHTML = `
+            <i class="fa-solid fa-circle-check text-green-600 text-lg mr-1"></i> Resposta Correta! (+5 pontos)
+          `;
+        } else {
+          autoVerdictEl.className = 'p-3 bg-red-100 text-red-950 border-2 border-red-300 rounded-2xl font-bold text-xs sm:text-sm text-center mb-3 shadow-sm';
+          autoVerdictEl.innerHTML = `
+            <i class="fa-solid fa-circle-xmark text-red-600 text-lg mr-1"></i> Resposta Incorreta!<br>
+            <span class="text-xs text-red-800">Sua resposta: "${this.escapeHtml(providedAnswer)}"</span>
+          `;
+        }
+      }
+
+      // Register outcome automatically & Trigger Mascot Speech
       if (isCorrect) {
-        autoVerdictEl.className = 'p-3 bg-green-100 text-green-900 border-2 border-green-400 rounded-2xl font-black text-sm text-center mb-3 shadow-sm';
-        autoVerdictEl.innerHTML = `
-          <i class="fa-solid fa-circle-check text-green-600 text-lg mr-1"></i> Resposta Correta! (+5 pontos)
-        `;
+        window.storage.updateCardStatus(this.currentCard.id, 'Aprovado');
+        this.currentCard.status = 'Aprovado';
+        const result = window.storage.registerCorrectAnswer();
+
+        this.spawnFloatingScore('+5');
+
+        if (window.mascotManager) {
+          window.mascotManager.onCorrectAnswer();
+        }
+
+        if (result.isGoalReached && window.app) {
+          window.app.triggerDailyGoalToast();
+        } else if (window.confetti) {
+          window.confetti({ particleCount: 40, spread: 65, origin: { y: 0.7 } });
+        }
+
+        if (window.app) window.app.updateHeaderStats();
       } else {
-        autoVerdictEl.className = 'p-3 bg-red-100 text-red-950 border-2 border-red-300 rounded-2xl font-bold text-xs sm:text-sm text-center mb-3 shadow-sm';
-        autoVerdictEl.innerHTML = `
-          <i class="fa-solid fa-circle-xmark text-red-600 text-lg mr-1"></i> Resposta Incorreta!<br>
-          <span class="text-xs text-red-800">Sua resposta: "${this.escapeHtml(providedAnswer)}"</span>
-        `;
-      }
-    }
+        window.storage.updateCardStatus(this.currentCard.id, 'Reprovado');
+        this.currentCard.status = 'Reprovado';
 
-    // 3. Register outcome automatically & Trigger Mascot Speech
-    if (isCorrect) {
-      window.storage.updateCardStatus(this.currentCard.id, 'Aprovado');
-      this.currentCard.status = 'Aprovado';
-      const result = window.storage.registerCorrectAnswer();
-
-      this.spawnFloatingScore('+5');
-
-      if (window.mascotManager) {
-        window.mascotManager.onCorrectAnswer();
+        if (window.mascotManager) {
+          window.mascotManager.onIncorrectAnswer(this.currentCard.answer);
+        }
       }
 
-      if (result.isGoalReached && window.app) {
-        window.app.triggerDailyGoalToast();
-      } else if (window.confetti) {
-        window.confetti({ particleCount: 40, spread: 65, origin: { y: 0.7 } });
-      }
+      // Show next card button
+      const feedbackControls = document.getElementById('card-feedback-controls');
+      if (feedbackControls) feedbackControls.classList.remove('hidden');
 
-      if (window.app) window.app.updateHeaderStats();
-    } else {
-      window.storage.updateCardStatus(this.currentCard.id, 'Reprovado');
-      this.currentCard.status = 'Reprovado';
+      // 3. After card flips completely (0.6s / 600ms), restore font opacity to 100%
+      setTimeout(() => {
+        if (cardInner) {
+          cardInner.classList.remove('text-opacity-0');
+        }
+        this.isFlipping = false;
+      }, 600);
 
-      if (window.mascotManager) {
-        window.mascotManager.onIncorrectAnswer(this.currentCard.answer);
-      }
-    }
-
-    // Show next card button
-    const feedbackControls = document.getElementById('card-feedback-controls');
-    if (feedbackControls) feedbackControls.classList.remove('hidden');
+    }, 1000);
   }
 
   nextCard() {
+    if (this.isFlipping) return;
+    this.isFlipping = true;
+
     const cardContainer = document.getElementById('game-card-container');
+    const cardInner = document.getElementById('game-card-inner');
     const autoVerdictEl = document.getElementById('card-auto-verdict');
     const feedbackControls = document.getElementById('card-feedback-controls');
 
-    // 1. Immediately hide previous answer feedback ("se acertou ou errou") and next card button
+    // Immediately hide previous answer feedback ("se acertou ou errou") and next card button
     if (autoVerdictEl) {
       autoVerdictEl.classList.add('hidden');
       autoVerdictEl.innerHTML = '';
@@ -536,34 +561,43 @@ class GameEngine {
       feedbackControls.classList.add('hidden');
     }
 
-    // 2. Immediately darken card to obscure next card's answer during flip
+    // 1. Set font/text opacity to 0 immediately before turning
+    if (cardInner) {
+      cardInner.classList.add('text-opacity-0');
+    }
     if (cardContainer) {
       cardContainer.classList.add('card-darkened');
     }
 
-    // 3. Unflip card 3D back to 0deg (front question)
-    const cardInner = document.getElementById('game-card-inner');
-    if (cardInner) {
-      
-      cardInner.classList.remove('is-flipped');
-    }
-    this.isFlipped = false;
-
-    // 4. Advance queue and render next card data
-    this.currentCardIndex++;
-    if (this.currentCardIndex < this.cardQueue.length) {
-      this.currentCard = this.cardQueue[this.currentCardIndex];
-      this.renderCurrentCard();
-    } else {
-      this.loadCardQueue();
-    }
-
-    // 5. As the card flips back to reveal the next question (halfway through rotation ~300ms), remove darkening to restore normal colors
+    // 2. Wait 1 second (1000ms) with font opacity = 0
     setTimeout(() => {
-      if (cardContainer) {
-        cardContainer.classList.remove('card-darkened');
+      // Activate 3D un-flip animation back to 0deg (front question)
+      if (cardInner) {
+        cardInner.classList.remove('is-flipped');
       }
-    }, 300);
+      this.isFlipped = false;
+
+      // Advance queue and render next card data
+      this.currentCardIndex++;
+      if (this.currentCardIndex < this.cardQueue.length) {
+        this.currentCard = this.cardQueue[this.currentCardIndex];
+        this.renderCurrentCard();
+      } else {
+        this.loadCardQueue();
+      }
+
+      // 3. After card flips completely (0.6s / 600ms), remove darkening and restore font opacity to 100%
+      setTimeout(() => {
+        if (cardContainer) {
+          cardContainer.classList.remove('card-darkened');
+        }
+        if (cardInner) {
+          cardInner.classList.remove('text-opacity-0');
+        }
+        this.isFlipping = false;
+      }, 600);
+
+    }, 1000);
   }
 
   spawnFloatingScore(text) {
