@@ -141,13 +141,13 @@ window.PluginPWANotifications = {
 
     // Calculate absolute URL for PNG icon & transparent badge so mobile PWAs & Android status bar render without white square
     let iconUrl = './images/icon.png';
-    let badgeUrl = './images/badge2.png';
+    let badgeUrl = './images/badge.png';
     try {
       iconUrl = new URL('./images/icon.png', window.location.href).href;
-      badgeUrl = new URL('./images/badge2.png', window.location.href).href;
+      badgeUrl = new URL('./images/badge.png', window.location.href).href;
     } catch (e) {
       iconUrl = 'images/icon.png';
-      badgeUrl = 'images/badge2.png';
+      badgeUrl = 'images/badge.png';
     }
 
     const options = {
