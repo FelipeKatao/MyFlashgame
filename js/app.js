@@ -13,9 +13,18 @@ class App {
     this.setupEventListeners();
     this.updateHeaderStats();
 
-    // Screen routing check based on flashcards presence
+    // Check URL parameters for targeted notification card
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetCardId = urlParams.get('cardId');
+    const targetCategory = urlParams.get('category');
+
     const cardCount = window.storage.data.cards.length;
-    if (cardCount === 0) {
+    if (targetCardId) {
+      this.navigateTo('game', false);
+      if (window.gameEngine) {
+        window.gameEngine.loadSpecificCard(targetCardId, targetCategory);
+      }
+    } else if (cardCount === 0) {
       this.navigateTo('home', false);
     } else {
       this.navigateTo('game', false);
@@ -98,11 +107,6 @@ class App {
     if (!targetScreenEl) return;
     if (screenId === this.currentScreen && targetScreenEl.classList.contains('active-screen')) return;
 
-    // Check redirection rule for home
-    if (screenId === 'home' && window.storage.data.cards.length > 0 && animate) {
-      // If user clicks home but already has cards, allow viewing home explanation or route
-    }
-
     this.isTransitioning = true;
 
     // Highlight menu link
@@ -151,13 +155,15 @@ class App {
 
   onScreenActive(screenId) {
     if (screenId === 'game') {
-      if (window.gameEngine) window.gameEngine.init();
+      if (window.gameEngine && !window.gameEngine.currentCard) window.gameEngine.init();
     } else if (screenId === 'manage') {
       if (window.manageCards) window.manageCards.init();
     } else if (screenId === 'profile') {
       if (window.profileManager) window.profileManager.init();
     } else if (screenId === 'export') {
       if (window.exportManager) window.exportManager.init();
+    } else if (screenId === 'plugins') {
+      if (window.pluginsManager) window.pluginsManager.init();
     }
   }
 

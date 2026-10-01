@@ -1,6 +1,6 @@
 /**
  * Profile Module for MyFlashGame
- * Handles player name, daily goals, resetting data, and profile stats
+ * Handles player name, daily goals, response mode selection, resetting data, and profile stats
  */
 
 class ProfileManager {
@@ -31,6 +31,29 @@ class ProfileManager {
         if (window.app) {
           window.app.updateHeaderStats();
           window.app.showNotification("Meta diária atualizada!");
+        }
+      });
+    }
+
+    // Response Mode Radio Listeners
+    const modeMultiple = document.getElementById('profile-mode-multiple');
+    if (modeMultiple) {
+      modeMultiple.addEventListener('change', () => {
+        if (modeMultiple.checked) {
+          window.storage.setResponseMode('multiple_choice');
+          if (window.app) window.app.showNotification("Modo de resposta: Múltipla Escolha ativo!");
+          if (window.gameEngine) window.gameEngine.renderCurrentCard();
+        }
+      });
+    }
+
+    const modeType = document.getElementById('profile-mode-type');
+    if (modeType) {
+      modeType.addEventListener('change', () => {
+        if (modeType.checked) {
+          window.storage.setResponseMode('type');
+          if (window.app) window.app.showNotification("Modo de resposta: Digitar resposta ativo!");
+          if (window.gameEngine) window.gameEngine.renderCurrentCard();
         }
       });
     }
@@ -88,6 +111,14 @@ class ProfileManager {
 
     const goalInput = document.getElementById('profile-daily-goal-input');
     if (goalInput) goalInput.value = data.dailyGoal || 5;
+
+    // Response Mode Radios
+    const currentMode = data.responseMode || 'multiple_choice';
+    const modeMultiple = document.getElementById('profile-mode-multiple');
+    const modeType = document.getElementById('profile-mode-type');
+
+    if (modeMultiple) modeMultiple.checked = (currentMode === 'multiple_choice');
+    if (modeType) modeType.checked = (currentMode === 'type');
 
     // Stats
     const scoreVal = document.getElementById('profile-stat-score');

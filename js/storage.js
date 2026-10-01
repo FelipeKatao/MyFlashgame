@@ -13,6 +13,12 @@ const defaultData = {
   dailyHits: 0,
   lastGoalDate: new Date().toISOString().split('T')[0],
   goalReachedToday: false,
+  responseMode: 'multiple_choice', // 'multiple_choice' or 'type'
+  installedPlugins: [], // e.g. ['english-advanced', 'pwa-notifications']
+  notificationSettings: {
+    category: 'Todas',
+    intervalMinutes: 1 // default to 1 min for fast testing, can be 1, 5, 15, 30, 60, 120
+  },
   categories: ['Geral', 'Matemática', 'Ciências', 'História', 'Inglês'],
   cards: []
 };
@@ -68,7 +74,6 @@ class AppStorage {
       const date = new Date();
       date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
       const expires = "; expires=" + date.toUTCString();
-      // Encode value to ensure valid cookie string
       const encodedValue = encodeURIComponent(value);
       document.cookie = name + "=" + (encodedValue || "") + expires + "; path=/; SameSite=Lax";
     } catch (e) {
@@ -98,14 +103,12 @@ class AppStorage {
   loadData() {
     let raw = null;
 
-    // 1. Try LocalStorage
     try {
       raw = localStorage.getItem(STORAGE_KEY);
     } catch (e) {
       console.warn("LocalStorage load error:", e);
     }
 
-    // 2. Fallback to Cookie
     if (!raw) {
       raw = this.getCookie(STORAGE_KEY);
     }
@@ -113,7 +116,14 @@ class AppStorage {
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
-        return { ...defaultData, ...parsed };
+        return {
+          ...defaultData,
+          ...parsed,
+          notificationSettings: {
+            ...defaultData.notificationSettings,
+            ...(parsed.notificationSettings || {})
+          }
+        };
       } catch (e) {
         console.error("Error parsing stored data:", e);
       }
@@ -125,18 +135,15 @@ class AppStorage {
   saveData() {
     const jsonStr = JSON.stringify(this.data);
 
-    // Save LocalStorage
     try {
       localStorage.setItem(STORAGE_KEY, jsonStr);
     } catch (e) {
       console.warn("LocalStorage save error:", e);
     }
 
-    // Save Cookie
     this.setCookie(STORAGE_KEY, jsonStr);
   }
 
-  // Reset daily hits if date changed
   checkDailyReset() {
     const today = new Date().toISOString().split('T')[0];
     if (this.data.lastGoalDate !== today) {
@@ -147,6 +154,43 @@ class AppStorage {
     }
   }
 
+  // --- Notification Settings ---
+  setNotificationSettings(category, intervalMinutes) {
+    this.data.notificationSettings = {
+      category: category || 'Todas',
+      intervalMinutes: Math.max(1, parseInt(intervalMinutes) || 1)
+    };
+    this.saveData();
+  }
+
+  // --- Response Mode Settings ---
+  setResponseMode(mode) {
+    if (mode === 'multiple_choice' || mode === 'type') {
+      this.data.responseMode = mode;
+      this.saveData();
+    }
+  }
+
+  // --- Plugin Settings ---
+  isPluginInstalled(pluginId) {
+    return Array.isArray(this.data.installedPlugins) && this.data.installedPlugins.includes(pluginId);
+  }
+
+  setPluginInstalled(pluginId, installed) {
+    if (!Array.isArray(this.data.installedPlugins)) {
+      this.data.installedPlugins = [];
+    }
+
+    if (installed) {
+      if (!this.data.installedPlugins.includes(pluginId)) {
+        this.data.installedPlugins.push(pluginId);
+      }
+    } else {
+      this.data.installedPlugins = this.data.installedPlugins.filter(id => id !== pluginId);
+    }
+    this.saveData();
+  }
+
   // --- Card Management ---
   getCards(category = 'Todas') {
     if (!category || category === 'Todas') {
@@ -155,13 +199,14 @@ class AppStorage {
     return this.data.cards.filter(c => c.category === category);
   }
 
-  addCard(question, answer, category) {
+  addCard(question, answer, category, extraData = {}) {
     const newCard = {
       id: 'card-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
       question: question.trim(),
       answer: answer.trim(),
       category: category ? category.trim() : 'Geral',
-      status: '' // '', 'Aprovado', 'Reprovado'
+      status: '', // '', 'Aprovado', 'Reprovado'
+      ...extraData
     };
 
     if (!this.data.categories.includes(newCard.category)) {
@@ -173,12 +218,14 @@ class AppStorage {
     return newCard;
   }
 
-  updateCard(id, question, answer, category) {
+  updateCard(id, question, answer, category, extraData = {}) {
     const card = this.data.cards.find(c => c.id === id);
     if (card) {
       card.question = question.trim();
       card.answer = answer.trim();
       card.category = category ? category.trim() : 'Geral';
+      Object.assign(card, extraData);
+
       if (!this.data.categories.includes(card.category)) {
         this.data.categories.push(card.category);
       }
@@ -202,7 +249,6 @@ class AppStorage {
   }
 
   loadSampleCards() {
-    // Adds sample cards if empty or appends missing ones
     SAMPLE_CARDS.forEach(sample => {
       if (!this.data.cards.some(c => c.question === sample.question)) {
         this.data.cards.push({ ...sample, id: 'sample-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4) });

@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Flashcards - Aprenda Brincando</title>
 
+  <!-- PWA Web Manifest -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#f59e0b">
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
@@ -124,6 +128,11 @@
         <i class="fa-solid fa-file-pdf text-red-500 text-lg w-6"></i>
         <span>Exportar Flash Cards</span>
       </button>
+
+      <button data-nav-target="plugins" class="menu-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-amber-950 hover:bg-amber-100 transition-all text-left">
+        <i class="fa-solid fa-puzzle-piece text-purple-600 text-lg w-6"></i>
+        <span>Plugins</span>
+      </button>
       
       <hr class="border-amber-200/60 my-3">
 
@@ -170,7 +179,7 @@
               <i class="fa-solid fa-rotate"></i>
             </div>
             <h3 class="font-bold text-slate-800 text-base mb-1">Gire o Card</h3>
-            <p class="text-slate-600 text-xs">Digite sua resposta ou teste seu conhecimento virando o cartão em 3D.</p>
+            <p class="text-slate-600 text-xs">Responda por múltipla escolha ou digitação e confirme com rotação 3D.</p>
           </div>
 
           <div class="bg-white p-5 rounded-2xl border border-orange-200 shadow-sm hover:shadow-md transition-all">
@@ -183,10 +192,10 @@
 
           <div class="bg-white p-5 rounded-2xl border border-amber-200 shadow-sm hover:shadow-md transition-all">
             <div class="w-12 h-12 rounded-xl bg-yellow-100 text-yellow-700 flex items-center justify-center text-xl font-extrabold mb-3">
-              <i class="fa-solid fa-file-pdf"></i>
+              <i class="fa-solid fa-puzzle-piece"></i>
             </div>
-            <h3 class="font-bold text-slate-800 text-base mb-1">Exporte em PDF</h3>
-            <p class="text-slate-600 text-xs">Gere arquivos PDF prontos para imprimir e estudar em qualquer lugar.</p>
+            <h3 class="font-bold text-slate-800 text-base mb-1">Plugins & PWA</h3>
+            <p class="text-slate-600 text-xs">Instale vocabulário de Inglês avançado e notificações Push PWA.</p>
           </div>
         </div>
 
@@ -225,7 +234,7 @@
 
         <!-- RECTANGULO AMARELO - 3D FLIP CARD CONTAINER -->
         <div id="game-card-container" class="perspective-1000 w-full h-80 sm:h-96 mb-6">
-          <div id="game-card-inner" class="card-inner cursor-pointer" onclick="if(!window.gameEngine.isFlipped) window.gameEngine.flipCard()">
+          <div id="game-card-inner" class="card-inner">
             
             <!-- CARD FRONT (PERGUNTA - AMARELO) -->
             <div class="card-front select-none">
@@ -239,15 +248,16 @@
               </div>
 
               <!-- Question Text -->
-              <div class="flex-1 flex items-center justify-center px-4 my-2 text-center">
-                <h3 id="card-question-text" class="text-xl sm:text-3xl font-black text-amber-950 leading-relaxed drop-shadow-sm">
+              <div class="flex-1 flex flex-col items-center justify-center px-4 my-2 text-center">
+                <h3 id="card-question-text" class="text-xl sm:text-3xl font-black text-amber-950 leading-relaxed drop-shadow-sm mb-2">
                   Pergunta do Flashcard
                 </h3>
+                <div id="card-phonetic-container" class="hidden"></div>
               </div>
 
               <!-- Hint Footer -->
               <div class="text-xs font-extrabold text-amber-800/80 flex items-center gap-1.5 mt-auto">
-                <i class="fa-solid fa-arrows-rotate text-orange-600"></i> Clique ou use a caixa abaixo para virar o card
+                <i class="fa-solid fa-circle-info text-orange-600"></i> Responda nas opções abaixo para virar o card
               </div>
             </div>
 
@@ -262,49 +272,35 @@
                 </span>
               </div>
 
-              <!-- Answer Text -->
-              <div class="flex-1 flex items-center justify-center px-4 my-2 text-center">
+              <!-- Answer Text & Example -->
+              <div class="flex-1 flex flex-col items-center justify-center px-4 my-2 text-center">
                 <p id="card-answer-text" class="text-xl sm:text-2xl font-extrabold text-orange-950 leading-relaxed">
                   Resposta do Flashcard
                 </p>
+                <div id="card-example-container" class="hidden w-full"></div>
               </div>
 
               <div class="text-xs font-semibold text-orange-800 mt-auto">
-                Selecione abaixo se você acertou ou errou!
+                Validação automática aplicada com sucesso!
               </div>
             </div>
 
           </div>
         </div>
 
-        <!-- INPUT TEXTBOX & CONTROL BUTTONS BELOW CARD -->
+        <!-- RESPONSE CONTROLS CONTAINER -->
         <div class="bg-white rounded-2xl p-5 border border-amber-200 shadow-md">
           
           <!-- Auto Verdict Banner (Shown on back) -->
           <div id="card-auto-verdict" class="hidden"></div>
 
-          <!-- FRONT STATE CONTROLS (Input + Virar Card) -->
-          <form id="answer-form" class="space-y-4">
-            <div id="card-check-controls" class="space-y-3">
-              <label for="user-answer-input" class="block text-xs uppercase tracking-wider font-extrabold text-slate-500">
-                Sua Resposta (Opcional):
-              </label>
-              <div class="flex flex-col sm:flex-row gap-3">
-                <input type="text" id="user-answer-input" placeholder="Digite aqui sua resposta para conferir..." autocomplete="off" class="flex-1 px-4 py-3 bg-amber-50/60 border border-amber-300 rounded-xl font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500">
-                <button type="button" id="btn-flip-card" class="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
-                  <i class="fa-solid fa-rotate-right"></i> Virar Card
-                </button>
-              </div>
-            </div>
-          </form>
+          <!-- Dynamic Response Mode Controls (Multiple Choice or Type Input) -->
+          <div id="response-mode-container"></div>
 
-          <!-- BACK STATE CONTROLS (Acertei / Errei / Próximo) -->
-          <div id="card-feedback-controls" class="hidden flex flex-col sm:flex-row items-center justify-between gap-3">
-            <button id="btn-mark-incorrect" class="w-full sm:w-auto px-5 py-3 bg-red-100 hover:bg-red-200 text-red-800 border border-red-300 font-extrabold rounded-xl transition-all flex items-center justify-center gap-2">
-              <i class="fa-solid fa-xmark text-lg"></i> Errei
-            </button>
-            <button id="btn-mark-correct" class="w-full sm:flex-1 px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-extrabold rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
-              <i class="fa-solid fa-check text-lg"></i> Acertei (+5 pts)
+          <!-- Next Card Navigation Button (Revealed after automated answer validation) -->
+          <div id="card-feedback-controls" class="hidden mt-4 pt-3 border-t border-slate-100 text-center">
+            <button id="btn-next-card" class="w-full py-3 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white font-black text-base rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+              <span>Próximo Card</span> <i class="fa-solid fa-arrow-right"></i>
             </button>
           </div>
 
@@ -387,7 +383,7 @@
           </div>
           <div>
             <h2 class="text-2xl font-black text-slate-900">Meu Perfil e Configurações</h2>
-            <p class="text-slate-600 text-xs sm:text-sm">Personalize seu nome, meta diária e gerencie seus dados.</p>
+            <p class="text-slate-600 text-xs sm:text-sm">Personalize seu nome, modo de resposta, meta diária e dados.</p>
           </div>
         </div>
 
@@ -409,6 +405,32 @@
                 <i class="fa-solid fa-bullseye text-orange-500 mr-1"></i> Meta Diária de Acertos:
               </label>
               <input type="number" id="profile-daily-goal-input" min="1" max="100" class="w-full px-4 py-3 bg-amber-50/50 border border-amber-300 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500">
+            </div>
+          </div>
+
+          <!-- RESPONSE MODE CONFIGURATION -->
+          <div class="pt-4 border-t border-slate-100">
+            <label class="block text-xs uppercase tracking-wider font-extrabold text-slate-500 mb-3">
+              <i class="fa-solid fa-sliders text-orange-500 mr-1"></i> Modo de Resposta do Flashcard:
+            </label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              
+              <label class="relative flex items-start p-4 rounded-2xl border-2 border-amber-200 bg-amber-50/50 hover:bg-amber-100/60 cursor-pointer transition-all">
+                <input type="radio" id="profile-mode-multiple" name="response_mode" value="multiple_choice" class="mt-1 text-orange-600 focus:ring-orange-500">
+                <div class="ml-3">
+                  <span class="block font-extrabold text-slate-900 text-sm">Múltipla Escolha</span>
+                  <span class="block text-xs text-slate-600 mt-0.5">Exibe 3 opções (1 correta e 2 de outros cards da matéria). Validação automática ao virar.</span>
+                </div>
+              </label>
+
+              <label class="relative flex items-start p-4 rounded-2xl border-2 border-amber-200 bg-amber-50/50 hover:bg-amber-100/60 cursor-pointer transition-all">
+                <input type="radio" id="profile-mode-type" name="response_mode" value="type" class="mt-1 text-orange-600 focus:ring-orange-500">
+                <div class="ml-3">
+                  <span class="block font-extrabold text-slate-900 text-sm">Digitar Resposta</span>
+                  <span class="block text-xs text-slate-600 mt-0.5">Digite o texto. O app limpa espaços e ignora maiúsculas para validação automática!</span>
+                </div>
+              </label>
+
             </div>
           </div>
 
@@ -532,6 +554,28 @@
       </div>
     </section>
 
+    <!-- ==================== SCREEN 6: PLUGINS DO APP ==================== -->
+    <section id="screen-plugins" class="page-screen hidden">
+      <div class="space-y-6 py-4">
+        
+        <!-- Header -->
+        <div class="bg-white/80 backdrop-blur p-6 rounded-3xl border border-amber-200 shadow-sm flex items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-black text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-puzzle-piece text-purple-600"></i> Plugins & Extensões do App
+            </h2>
+            <p class="text-slate-600 text-xs sm:text-sm">Instale plugins para expandir as funcionalidades e conteúdos do seu aplicativo.</p>
+          </div>
+        </div>
+
+        <!-- Plugins Cards Grid -->
+        <div id="plugins-cards-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Rendered by plugins.js -->
+        </div>
+
+      </div>
+    </section>
+
   </main>
 
   <!-- MODAL CREATE / EDIT FLASHCARD -->
@@ -596,6 +640,9 @@
 
   <!-- SCRIPTS -->
   <script src="js/storage.js"></script>
+  <script src="js/plugins/english-advanced.js"></script>
+  <script src="js/plugins/pwa-notifications.js"></script>
+  <script src="js/plugins.js"></script>
   <script src="js/game.js"></script>
   <script src="js/manage.js"></script>
   <script src="js/profile.js"></script>
